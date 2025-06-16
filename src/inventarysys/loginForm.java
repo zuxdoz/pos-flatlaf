@@ -147,7 +147,7 @@ public class loginForm extends javax.swing.JFrame {
             
             //Abre el programa principal si el login es correcto
             java.awt.EventQueue.invokeLater(()->{
-                new mainForm().setVisible(true);
+                new mainForm(null).setVisible(true);
                 UImanage.changeTheme("light");
             });
             

@@ -7,6 +7,7 @@ package inventarysys;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
@@ -29,7 +30,7 @@ public class UImanage {
             window.pack(); // Ajusta el layout al nuevo tema
         }
 
-        }catch(Exception e){
+        }catch(UnsupportedLookAndFeelException e){
             e.printStackTrace();
         }
     }

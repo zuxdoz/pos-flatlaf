@@ -4,25 +4,50 @@
  */
 
 package inventarysys;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import toggle.ToggleAdapter;
 
 /**
  *
  * @author circo
+ * TODO FIX BLANK ERROR WITH SEARCH WITH CODE AT JTEXTFIELD1 AND IMPLEMENT INVALID ERROR 
+ * FOR DON'T FOUNDED CODE IN DATABASE
  */
 public class mainForm extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(mainForm.class.getName());
-
+  
+    productInfo product = new productInfo();
+    Connection dataBaseConn = connectDB();
+    float productsPrice;
     /**
      * Creates new form mainForm
      */
-    public mainForm() {
+    boolean isDarkMode = false;
+    public mainForm(productInfo productInfo) {
+        
+        
         initComponents();
-        itemComponents();
+        setTableSettings();
+        addItemEvent(jSpinner1.getEditor());
+        jTextField1.requestFocus();
+        if(productInfo != null){
+            this.product = productInfo;
+           
+        }
         
         this.setFocusable(true);
         this.requestFocusInWindow();
@@ -32,7 +57,7 @@ public class mainForm extends javax.swing.JFrame {
         });
         
         timer.start();
-        
+
         toggleButton1.addEventToggleSelected(new ToggleAdapter(){
             @Override
             public void onSelected(boolean selected){
@@ -41,12 +66,14 @@ public class mainForm extends javax.swing.JFrame {
                 ImageIcon icon = new ImageIcon(getClass().getResource("/images/moon.png")); 
                 icon.getImage().flush();
                 UImanage.changeTheme("dark");
+                isDarkMode = true;
                 jLabel2.setIcon(icon);
                 
             } else{
                 ImageIcon icon = new ImageIcon(getClass().getResource("/images/sun.png"));
                 icon.getImage().flush();
                 UImanage.changeTheme("Light");
+                isDarkMode = false;
                 jLabel2.setIcon(icon);
 
             }
@@ -71,12 +98,16 @@ public class mainForm extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
         jTextField4 = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
+        jSpinner1 = new javax.swing.JSpinner();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton1 = new javax.swing.JButton();
+        jLabel7 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenu2 = new javax.swing.JMenu();
@@ -84,6 +115,8 @@ public class mainForm extends javax.swing.JFrame {
         jMenu4 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(1000, 500));
+        setPreferredSize(new java.awt.Dimension(1250, 600));
         addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 formKeyPressed(evt);
@@ -98,15 +131,16 @@ public class mainForm extends javax.swing.JFrame {
         jLabel2.setMaximumSize(new java.awt.Dimension(10, 10));
         jLabel2.setMinimumSize(new java.awt.Dimension(10, 512));
 
-        jTextField1.setText("jTextField1");
+        jTextField1.setToolTipText("Presiona la tecla ENTER para ingresar producto");
+        jTextField1.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                jTextField1KeyPressed(evt);
+            }
+        });
 
         jTextField2.setEditable(false);
-        jTextField2.setText("jTextField2");
-
-        jTextField3.setText("jTextField3");
 
         jTextField4.setEditable(false);
-        jTextField4.setText("jTextField4");
 
         jLabel3.setText("Código");
 
@@ -115,6 +149,21 @@ public class mainForm extends javax.swing.JFrame {
         jLabel5.setText("Cantidad");
 
         jLabel6.setText("Subtotal");
+
+        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(1, 1, 999, 1));
+        jSpinner1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jSpinner1StateChanged(evt);
+            }
+        });
+
+        jTable1.setModel(setTableModel());
+        jScrollPane1.setViewportView(jTable1);
+
+        jButton1.setText("Cobrar");
+
+        jLabel7.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel7.setToolTipText("Total a pagar");
 
         jMenuBar1.setBorderPainted(false);
         jMenuBar1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -142,35 +191,47 @@ public class mainForm extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField2)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(496, 496, 496)
+                        .addComponent(toggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(24, 24, 24))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTextField2)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(27, 27, 27)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap())))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 1125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(43, 45, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(423, Short.MAX_VALUE)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(496, 496, 496)
-                .addComponent(toggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(915, 915, 915)
+                .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24))
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jLabel1)
                 .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -186,9 +247,15 @@ public class mainForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 712, Short.MAX_VALUE))
+                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 56, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE))
+                .addGap(39, 39, 39))
         );
 
         pack();
@@ -201,6 +268,38 @@ public class mainForm extends javax.swing.JFrame {
       }
     }//GEN-LAST:event_formKeyPressed
 
+    private void jTextField1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField1KeyPressed
+      if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER){
+          jSpinner1.requestFocus();
+            if("".equals(jTextField1.getText())){
+                java.awt.EventQueue.invokeLater(()->{
+                new searchProduct(this).setVisible(true);
+                if(!isDarkMode){
+                    UImanage.changeTheme("light");
+                }
+                else{
+                    UImanage.changeTheme("dark");
+                }
+            });
+            
+            }
+            else{
+                try{
+                    searchProducts(Integer.parseInt(jTextField1.getText().trim()),dataBaseConn);
+                    jTextField2.setText(product.getDescription());
+                    jTextField4.setText(String.valueOf(product.getSellPrice()));
+                }catch(NumberFormatException e){
+                    JOptionPane.showMessageDialog(rootPane, "Sólo se permite el ingreso de números enteros");
+                }
+                
+            }
+        }
+    }//GEN-LAST:event_jTextField1KeyPressed
+
+    private void jSpinner1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinner1StateChanged
+        subtotalPrice((Integer) jSpinner1.getValue());
+    }//GEN-LAST:event_jSpinner1StateChanged
+
     /**
      * @param args the command line arguments
      */
@@ -210,25 +309,29 @@ public class mainForm extends javax.swing.JFrame {
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
-        
-        java.awt.EventQueue.invokeLater(() -> new mainForm().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new mainForm(null).setVisible(true));
+
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JTable jTable1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
     private toggle.ToggleButton toggleButton1;
     // End of variables declaration//GEN-END:variables
@@ -238,15 +341,159 @@ public class mainForm extends javax.swing.JFrame {
         return dateString;
     }
     
-    private void itemComponents(){
-
-    }
     
     private Boolean menuToggle(Boolean isVisible){
         isVisible = !isVisible;
         
-        return isVisible;
-                
+        return isVisible; 
     }
+    public inventarysys.productInfo setProductInfo(productInfo productInfo){
+         jTextField1.setText(String.valueOf(productInfo.getCode()));
+         jTextField2.setText(productInfo.getDescription());
+         jTextField4.setText(String.valueOf(productInfo.getSellPrice()));
+         
+         return this.product = productInfo;
+         
+         
+         
+    }
+    
+    private void subtotalPrice(int quantity){
+        float subtotal = quantity*product.getSellPrice();
+        jTextField4.setText(String.valueOf(subtotal));
+        
+    }
+    
+    private float updateTotalPrice(float price){
+       return productsPrice+=price;
+       
+    }
+    
+    private Connection connectDB() {
+    String url = "jdbc:sqlite:inventary.db";
+    Connection conn = null;
+    
+    try {
+        conn = DriverManager.getConnection(url);
+        if (conn != null) {
+            DatabaseMetaData meta = conn.getMetaData();
+            System.out.println("El driver es: " + meta.getDriverName());
+            System.out.println("Conexión y configuración establecida correctamente");
+        }
+    } catch (SQLException e) {
+        System.out.println("Error en la conexión: " + e.getMessage());
+    }
+    
+    return conn;
+    }
+    
+    private void searchProducts(int code, Connection conn) {
+    //model.clear();
+    String search = "SELECT * FROM Products WHERE id LIKE ?";
+    
+    try (PreparedStatement pstmt = conn.prepareStatement(search)) {
+        
+        pstmt.setString(1, "%" + code + "%");
+        
+        try (ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                // Leer datos del producto
+                int id = rs.getInt("id"); // ejemplo
+                String description = rs.getString("description");
+                int quantity = rs.getInt("quantity");
+                String brand = rs.getString("brand");
+                String type = rs.getString("type");
+                float sellPrice = rs.getFloat("sellPrice");
+                float buyPrice = rs.getFloat("buyPrice");
+                
+                if (quantity>0){
+
+                    this.product.setCode(id);
+                    this.product.setDescription(description);
+                    this.product.setSellPrice(sellPrice);
+                    this.product.setBuyPrice(buyPrice);
+                    this.product.setBrand(brand);
+                    this.product.setQuantity(quantity);
+                    this.product.setType(type);
+                
+                }
+                      
+            }
+           
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+    private void closeDB(Connection conn){
+        try {
+            conn.close();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+      
+    }
+    
+    private javax.swing.table.TableModel setTableModel(){
+        String[] columNames = {"Código","Descripción","Precio","Cantidad","Subtotal"};
+        javax.swing.table.TableModel model = new javax.swing.table.DefaultTableModel(null,columNames);
+        return model;
+    }
+    
+    private void setTableSettings(){
+        //Table column sizes
+        jTable1.getColumnModel().getColumn(0).setMinWidth(200);
+        jTable1.getColumnModel().getColumn(0).setPreferredWidth(166);
+    
+        
+        jTable1.getColumnModel().getColumn(1).setMinWidth(600);
+        jTable1.getColumnModel().getColumn(1).setPreferredWidth(498);
+        
+        jTable1.getColumnModel().getColumn(2).setMinWidth(100);
+        jTable1.getColumnModel().getColumn(2).setPreferredWidth(83);
+        
+        jTable1.getColumnModel().getColumn(3).setMinWidth(75);
+        jTable1.getColumnModel().getColumn(3).setPreferredWidth(62);
+        
+        jTable1.getColumnModel().getColumn(4).setMinWidth(100);
+        jTable1.getColumnModel().getColumn(4).setPreferredWidth(83);
+        
+        jTable1.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+   
+    }
+    
+    private void addItemEvent(JComponent editor){
+    if(editor instanceof JSpinner.DefaultEditor defaultEditor){
+        JTextField textField = defaultEditor.getTextField();
+
+        // Agregamos el KeyListener para detectar Enter
+        textField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        // Acción al presionar Enter
+                        updateTotalPrice(Float.parseFloat(jTextField4.getText().trim()));
+                        jLabel7.setText("$ " + String.valueOf(productsPrice));
+
+                        // Limpiar campos y enfocar en jTextField1
+                        java.awt.EventQueue.invokeLater(() -> {
+                            jTextField1.setText("");
+                            jTextField2.setText("");
+                            jTextField4.setText("");
+                            jTextField1.requestFocus();
+                        });
+                    } catch (NumberFormatException ex) {
+                        System.out.println("Error al procesar el valor: " + ex.getMessage());
+                    }
+                }
+            }
+        });
+
+    }
+}
 }
 
